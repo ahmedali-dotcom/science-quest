@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science Quest: Bio-Chem Odyssey (Grade 7 Cambridge Science)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter & Orbitron for sci-fi UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --panel-bg: #131b2e;
+            --accent-cyan: #00f2fe;
+            --accent-green: #00e676;
+            --accent-coral: #ff5252;
+            --accent-gold: #ffd700;
+            --accent-purple: #a855f7;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Glassmorphism elements */
+        .glass-panel {
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 254, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-panel-glow {
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+
+        /* Pulsing animations */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 242, 254, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(0, 242, 254, 0.7); }
+        }
+        .animate-glow {
+            animation: pulse-glow 2.5s infinite;
+        }
+
+        /* Custom Range Slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #1e293b;
+            border-radius: 8px;
+            height: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #00f2fe;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00f2fe;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <header class="sticky top-0 z-50 glass-panel border-b border-cyan-500/20 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('quest-map')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-extrabold text-xl font-orbitron shadow-lg shadow-cyan-500/30">
+                    🔬
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-300 to-yellow-300 tracking-wide">
+                        SCIENCE QUEST
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Bio-Chem Odyssey • Grade 7 Cambridge Revision</p>
+                </div>
+            </div>
+
+            <!-- XP Progress & Level Badge -->
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                <div class="flex items-center gap-3 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700/60 w-full md:w-64">
+                    <div class="text-xs font-bold text-yellow-400 uppercase font-orbitron whitespace-nowrap" id="level-badge">Lvl 1</div>
+                    <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+                        <div id="xp-bar" class="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                    <div class="text-xs font-semibold text-slate-300 font-mono" id="xp-text">0/500</div>
+                </div>
+
+                <!-- Audio Synthesizer Toggle Button -->
+                <button id="audio-toggle-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 flex items-center gap-2 text-xs font-medium text-slate-200 transition-all">
+                    <span id="audio-icon">🔊</span>
+                    <span id="audio-status-text" class="hidden sm:inline">Audio: ON</span>
+                </button>
+            </div>
+        </div>
+
+        <nav class="max-w-7xl mx-auto flex items-center justify-center sm:justify-start gap-2 mt-3 overflow-x-auto pb-1 text-sm font-semibold">
+            <button onclick="switchTab('quest-map')" id="nav-quest-map" class="nav-tab px-4 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-2 whitespace-nowrap transition-all">
+                🗺️ Quest Map
+            </button>
+            <button onclick="switchTab('lab-simulators')" id="nav-lab-simulators" class="nav-tab px-4 py-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap transition-all">
+                🧪 Lab Simulators
+            </button>
+            <button onclick="switchTab('revision-notes')" id="nav-revision-notes" class="nav-tab px-4 py-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap transition-all">
+                📚 Revision Notes
+            </button>
+            <button onclick="switchTab('summative-exam')" id="nav-summative-exam" class="nav-tab px-4 py-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap transition-all">
+                🏆 Grand Master Exam
+            </button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- TAB 1: QUEST MAP -->
+        <section id="tab-quest-map" class="tab-content block space-y-6">
+            <div class="glass-panel p-6 rounded-2xl border border-cyan-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold font-orbitron text-cyan-400 mb-1">Cambridge Science Sector Map</h2>
+                    <p class="text-slate-300 text-sm">Master all 6 sectors covering Respiration, Blood Defenses, and Particle Dissolving to unlock the Grand Master Exam!</p>
+                </div>
+                <button onclick="switchTab('summative-exam')" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-extrabold font-orbitron text-sm shadow-lg shadow-yellow-500/20 hover:scale-105 transition-transform flex items-center gap-2">
+                    ⚡ Launch Final Exam
+                </button>
+            </div>
+
+            <!-- Sectors Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="sectors-container">
+                <!-- Injected via JavaScript -->
+            </div>
+        </section>
+
+        <!-- TAB 2: LAB SIMULATORS -->
+        <section id="tab-lab-simulators" class="tab-content hidden space-y-6">
+            <!-- Lab Sub-Tabs -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800">
+                <button onclick="switchLab('lungs-sim')" id="subtab-lungs-sim" class="lab-subtab px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold font-orbitron flex items-center gap-2">
+                    🫁 Lungs & Breathing Mechanics
+                </button>
+                <button onclick="switchLab('blood-sim')" id="subtab-blood-sim" class="lab-subtab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 text-xs font-bold font-orbitron flex items-center gap-2">
+                    🩸 Blood Patrol & Antibodies
+                </button>
+                <button onclick="switchLab('particle-sim')" id="subtab-particle-sim" class="lab-subtab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 text-xs font-bold font-orbitron flex items-center gap-2">
+                    🧊 Particle Model & Dissolving
+                </button>
+                <button onclick="switchLab('respiration-sim')" id="subtab-respiration-sim" class="lab-subtab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 text-xs font-bold font-orbitron flex items-center gap-2">
+                    🧪 Respiration & Limewater
+                </button>
+            </div>
+
+            <!-- LAB 1: Lungs & Breathing -->
+            <div id="lab-lungs-sim" class="lab-view block space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Canvas Box -->
+                    <div class="lg:col-span-2 glass-panel p-4 rounded-2xl flex flex-col items-center justify-center relative">
+                        <div class="absolute top-4 left-4 bg-slate-900/80 px-3 py-1 rounded-lg border border-slate-700 text-xs text-cyan-400 font-mono">
+                            Interactive Anatomical Canvas
+                        </div>
+                        <canvas id="lungsCanvas" width="600" height="420" class="w-full max-w-full h-auto bg-slate-950 rounded-xl border border-slate-800 my-2"></canvas>
+                        
+                        <!-- Breathing Control Slider -->
+                        <div class="w-full max-w-md mt-2 flex flex-col gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                            <div class="flex justify-between text-xs font-bold">
+                                <span class="text-red-400">EXHALE (Dome Diaphragm)</span>
+                                <span class="text-cyan-400">INHALE (Flat Diaphragm)</span>
+                            </div>
+                            <input type="range" id="breathSlider" min="0" max="1" step="0.01" value="0.5" oninput="updateBreathingMechanics(this.value)" class="w-full">
+                            <div class="flex items-center justify-between text-xs text-slate-400 font-mono">
+                                <button onclick="toggleBreathAutoPlay()" id="breathAutoBtn" class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded hover:bg-cyan-500/30 font-sans font-semibold">
+                                    ▶️ Auto-Cycle
+                                </button>
+                                <span id="breathPhaseText" class="font-bold text-cyan-300">Phase: Mid-Transit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Readout Metric Panel & Anatomical Explanations -->
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h3 class="text-lg font-bold font-orbitron text-cyan-400 border-b border-slate-800 pb-2">Thoracic Cavity Metrics</h3>
+                        
+                        <div class="space-y-3 font-mono text-sm">
+                            <div class="flex justify-between items-center p-2 rounded bg-slate-900/80 border border-slate-800">
+                                <span class="text-slate-400">Chest Volume:</span>
+                                <span id="metric-volume" class="font-bold text-emerald-400">2850 mL</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 rounded bg-slate-900/80 border border-slate-800">
+                                <span class="text-slate-400">Thoracic Pressure:</span>
+                                <span id="metric-pressure" class="font-bold text-yellow-400">758 mmHg</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 rounded bg-slate-900/80 border border-slate-800">
+                                <span class="text-slate-400">Diaphragm Muscle:</span>
+                                <span id="metric-diaphragm" class="font-bold text-cyan-300">Contracting</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 rounded bg-slate-900/80 border border-slate-800">
+                                <span class="text-slate-400">Air Flow direction:</span>
+                                <span id="metric-airflow" class="font-bold text-cyan-400">Oxygen In ➔</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2 leading-relaxed">
+                            <p class="font-bold text-cyan-300">🔬 Key Cambridge Structures:</p>
+                            <ul class="list-disc list-inside space-y-1 text-slate-300">
+                                <li><strong class="text-white">Trachea:</strong> Has C-shaped cartilage rings preventing collapse.</li>
+                                <li><strong class="text-white">Bronchi & Bronchioles:</strong> Branched tubes routing air into alveoli.</li>
+                                <li><strong class="text-white">Alveoli:</strong> Tiny air sacs with 1-cell thin walls for fast gas exchange via diffusion.</li>
+                                <li><strong class="text-white">Diaphragm:</strong> Contracts down (flattens) on inhalation; relaxes up (domes) on exhalation.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAB 2: Blood Patrol -->
+            <div id="lab-blood-sim" class="lab-view hidden space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-panel p-4 rounded-2xl flex flex-col items-center justify-center relative">
+                        <div class="absolute top-4 left-4 bg-slate-900/80 px-3 py-1 rounded-lg border border-slate-700 text-xs text-red-400 font-mono">
+                            Immune Response Vessel Simulation
+                        </div>
+                        <canvas id="bloodCanvas" width="600" height="400" class="w-full max-w-full h-auto bg-slate-950 rounded-xl border border-slate-800 my-2"></canvas>
+                        <div class="flex gap-2 mt-2 w-full max-w-md">
+                            <button onclick="injectPathogens()" class="flex-1 py-2 bg-red-600/30 hover:bg-red-600/50 text-red-300 border border-red-500/50 rounded-xl text-xs font-bold">
+                                👾 Inject Pathogens
+                            </button>
+                            <button onclick="releaseAntibodies()" class="flex-1 py-2 bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/50 rounded-xl text-xs font-bold">
+                                🛡️ Release Antibodies
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h3 class="text-lg font-bold font-orbitron text-red-400 border-b border-slate-800 pb-2">Blood Cells & Function</h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2.5 bg-red-950/40 rounded-xl border border-red-800/40">
+                                <span class="font-bold text-red-400">🔴 Red Blood Cells (Erythrocytes):</span>
+                                <p class="text-slate-300 mt-1">Contain hemoglobin to transport oxygen. Biconcave shape increases surface area; lacks nucleus for max space.</p>
+                            </div>
+                            <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-700">
+                                <span class="font-bold text-emerald-400">🛡️ White Blood Cells (Leukocytes):</span>
+                                <p class="text-slate-300 mt-1"><strong>Phagocytes:</strong> Engulf and digest microbes.<br><strong>Lymphocytes:</strong> Produce Y-shaped antibodies that lock onto pathogen antigens.</p>
+                            </div>
+                            <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-700">
+                                <span class="font-bold text-amber-400">⚡ Platelets & Plasma:</span>
+                                <p class="text-slate-300 mt-1">Platelets form blood clots at cuts. Plasma is the liquid transporting nutrients, $CO_2$, and urea.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAB 3: Particle Model & Dissolving -->
+            <div id="lab-particle-sim" class="lab-view hidden space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-panel p-4 rounded-2xl flex flex-col items-center justify-center relative">
+                        <canvas id="particleCanvas" width="600" height="400" class="w-full max-w-full h-auto bg-slate-950 rounded-xl border border-slate-800 my-2"></canvas>
+                        <div class="w-full max-w-md bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                            <div class="flex justify-between text-xs font-bold">
+                                <span class="text-blue-400">❄️ Cold Water (20°C)</span>
+                                <span class="text-orange-400">🔥 Hot Water (80°C)</span>
+                            </div>
+                            <input type="range" id="tempSlider" min="20" max="80" value="20" oninput="updateParticleTemp(this.value)" class="w-full">
+                            <div class="flex justify-between text-xs text-slate-300 font-mono">
+                                <span>Temperature: <strong id="temp-val" class="text-cyan-400">20°C</strong></span>
+                                <button onclick="addSoluteCrystal()" class="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/40 font-sans">
+                                    🧂 Add Sugar Crystal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h3 class="text-lg font-bold font-orbitron text-cyan-400 border-b border-slate-800 pb-2">Solubility Principles</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong>Solute:</strong> The solid being dissolved (e.g., Sugar or Salt).<br>
+                            <strong>Solvent:</strong> The liquid doing the dissolving (e.g., Water).<br>
+                            <strong>Solution:</strong> Homogeneous mixture formed when solute dissolves in solvent.
+                        </p>
+                        <div class="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/40 text-xs text-cyan-200">
+                            🔥 <strong>Effect of Heat:</strong> High temperature endows water particles with kinetic energy. Faster collisions break solute bonds rapidly, increasing solubility capacity!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAB 4: Respiration & Limewater -->
+            <div id="lab-respiration-sim" class="lab-view hidden space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-panel p-4 rounded-2xl flex flex-col items-center justify-center relative">
+                        <canvas id="respirationCanvas" width="600" height="400" class="w-full max-w-full h-auto bg-slate-950 rounded-xl border border-slate-800 my-2"></canvas>
+                        <div class="flex gap-3">
+                            <button onclick="toggleRespiration(true)" class="px-4 py-2 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/50 rounded-xl text-xs font-bold">
+                                🧪 Feed Glucose (Start Respiration)
+                            </button>
+                            <button onclick="toggleRespiration(false)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-xl text-xs font-bold">
+                                ⏹️ Reset Flask
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h3 class="text-lg font-bold font-orbitron text-emerald-400 border-b border-slate-800 pb-2">Chemical Equation</h3>
+                        <div class="p-3 bg-slate-900 rounded-xl border border-slate-700 text-xs font-mono text-emerald-300 leading-relaxed">
+                            Glucose + Oxygen ➔ Carbon Dioxide + Water + Energy (ATP)<br>
+                            <span class="text-slate-400">C₆H₁₂O₆ + 6O₂ ➔ 6CO₂ + 6H₂O</span>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            <strong>Limewater Test:</strong> Bubbling Carbon Dioxide gas ($CO_2$) through clear calcium hydroxide solution (limewater) turns it <strong>cloudy milky white</strong> due to insoluble calcium carbonate formation!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: REVISION NOTES -->
+        <section id="tab-revision-notes" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold font-orbitron text-cyan-400">Cambridge Grade 7 Study Guide</h2>
+                        <p class="text-slate-300 text-sm">Key definitions, equations, and high-yield concepts for exam success.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="filterNotes('all')" class="note-filter px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/40">All Topics</button>
+                        <button onclick="filterNotes('bio')" class="note-filter px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-semibold hover:bg-slate-700">Biology</button>
+                        <button onclick="filterNotes('chem')" class="note-filter px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-semibold hover:bg-slate-700">Chemistry</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm" id="notes-grid">
+                    <!-- Note Cards injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SUMMATIVE EXAM -->
+        <section id="tab-summative-exam" class="tab-content hidden space-y-6">
+            <div id="exam-start-card" class="glass-panel p-8 rounded-2xl text-center max-w-2xl mx-auto space-y-6 border border-yellow-500/30">
+                <div class="w-16 h-16 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-3xl mx-auto border border-yellow-500/40">
+                    🏆
+                </div>
+                <div>
+                    <h2 class="text-2xl font-extrabold font-orbitron text-yellow-400">Cambridge Grade 7 Grand Master Exam</h2>
+                    <p class="text-slate-300 text-sm mt-2">Test your full knowledge across Respiration, Blood, Immunity, Particle Model, and Solubility!</p>
+                </div>
+                <div class="grid grid-cols-3 gap-3 text-xs font-mono bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                    <div><span class="text-slate-400">Questions:</span><br><strong class="text-cyan-400 text-base">10 MCQs</strong></div>
+                    <div><span class="text-slate-400">Target Pass:</span><br><strong class="text-emerald-400 text-base">80%</strong></div>
+                    <div><span class="text-slate-400">Reward:</span><br><strong class="text-yellow-400 text-base">500 XP + Badge</strong></div>
+                </div>
+                <button onclick="startExam()" class="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-extrabold font-orbitron text-base shadow-lg shadow-yellow-500/20 hover:scale-102 transition-transform">
+                    Start Grand Master Exam
+                </button>
+            </div>
+
+            <!-- Exam Quiz Container -->
+            <div id="exam-quiz-container" class="hidden glass-panel p-6 rounded-2xl max-w-3xl mx-auto space-y-6 border border-cyan-500/30">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <span class="text-xs font-mono text-cyan-400 font-bold" id="exam-progress-num">Question 1 of 10</span>
+                    <span class="text-xs font-mono text-yellow-400 font-bold" id="exam-score-live">Current Score: 0</span>
+                </div>
+
+                <div id="exam-question-body" class="space-y-4">
+                    <!-- Dynamic Question text and options -->
+                </div>
+
+                <div class="flex justify-between items-center pt-4 border-t border-slate-800">
+                    <button id="exam-prev-btn" onclick="prevExamQuestion()" class="px-4 py-2 bg-slate-800 text-slate-400 hover:text-white rounded-xl text-xs font-semibold">
+                        ← Previous
+                    </button>
+                    <button id="exam-next-btn" onclick="nextExamQuestion()" class="px-5 py-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold">
+                        Next Question →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Exam Result Card -->
+            <div id="exam-result-card" class="hidden glass-panel p-8 rounded-2xl text-center max-w-2xl mx-auto space-y-6">
+                <div id="exam-result-icon" class="text-5xl">🎉</div>
+                <h2 class="text-2xl font-bold font-orbitron" id="exam-result-title">Exam Complete!</h2>
+                <div class="text-3xl font-black font-mono text-cyan-400" id="exam-result-score">8 / 10 (80%)</div>
+                <p id="exam-result-msg" class="text-slate-300 text-sm leading-relaxed"></p>
+                <button onclick="resetExam()" class="px-6 py-2.5 rounded-xl bg-cyan-500 text-black font-bold font-orbitron text-xs">
+                    🔄 Retake Exam
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL FOR SECTOR QUIZ -->
+    <div id="sector-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="glass-panel max-w-lg w-full p-6 rounded-2xl border border-cyan-500/40 space-y-4 relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold">✕</button>
+            
+            <div class="flex items-center gap-3">
+                <span id="modal-sector-icon" class="text-3xl">🫁</span>
+                <div>
+                    <h3 id="modal-sector-title" class="text-lg font-bold font-orbitron text-cyan-400">Sector Title</h3>
+                    <p class="text-xs text-slate-400 font-mono">Cambridge Science Level Assessment</p>
+                </div>
+            </div>
+
+            <div id="modal-quiz-content" class="space-y-4">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-4 px-4 text-center text-xs text-slate-500 font-mono">
+        Grade 7 Cambridge Lower Secondary Science Interactive Revision Suite • Bio-Chem Odyssey
+    </footer>
+
+    <!-- SCRIPTS SECTION -->
+    <script>
+        // Global Game & User State
+        let state = {
+            xp: 0,
+            level: 1,
+            audioEnabled: true,
+            activeTab: 'quest-map',
+            activeLab: 'lungs-sim',
+            completedSectors: [false, false, false, false, false, false],
+            currentQuizSector: 0,
+            quizQuestionIdx: 0,
+            quizScore: 0,
+            examIdx: 0,
+            examAnswers: Array(10).fill(null)
+        };
+
+        // Web Audio API Synthesizer (No external sound files required)
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            if (!state.audioEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(180, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'levelup') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
+                    osc.frequency.setValueAtTime(880, now + 0.3);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.log('Audio Context Error', e);
+            }
+        }
+
+        window.toggleAudio = function() {
+            state.audioEnabled = !state.audioEnabled;
+            const statusText = document.getElementById('audio-status-text');
+            const icon = document.getElementById('audio-icon');
+            if (state.audioEnabled) {
+                statusText.innerText = 'Audio: ON';
+                icon.innerText = '🔊';
+                playSound('click');
+            } else {
+                statusText.innerText = 'Audio: OFF';
+                icon.innerText = '🔇';
+            }
+        };
+
+        function addXP(amount) {
+            state.xp += amount;
+            const newLevel = Math.floor(state.xp / 500) + 1;
+            if (newLevel > state.level) {
+                state.level = newLevel;
+                playSound('levelup');
+            }
+            updateXPUI();
+        }
+
+        function updateXPUI() {
+            const xpBar = document.getElementById('xp-bar');
+            const xpText = document.getElementById('xp-text');
+            const levelBadge = document.getElementById('level-badge');
+
+            const currentLevelXP = state.xp % 500;
+            const pct = (currentLevelXP / 500) * 100;
+
+            xpBar.style.width = pct + '%';
+            xpText.innerText = `${currentLevelXP}/500 XP`;
+            levelBadge.innerText = `Lvl ${state.level}`;
+        }
+
+        // Explicitly set as global functions on window object to prevent any ReferenceErrors
+        window.switchTab = function(tabId) {
+            playSound('click');
+            state.activeTab = tabId;
+
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+
+            // Show target tab
+            const target = document.getElementById('tab-' + tabId);
+            if (target) {
+                target.classList.remove('hidden');
+                target.classList.add('block');
+            }
+
+            // Highlight nav tabs
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.className = 'nav-tab px-4 py-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap transition-all';
+            });
+            const activeNavBtn = document.getElementById('nav-' + tabId);
+            if (activeNavBtn) {
+                activeNavBtn.className = 'nav-tab px-4 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-2 whitespace-nowrap transition-all';
+            }
+
+            // Trigger canvas resizing/rendering if tab is lab
+            if (tabId === 'lab-simulators') {
+                setTimeout(initCanvasSimulators, 50);
+            }
+        };
+
+        window.switchLab = function(labId) {
+            playSound('click');
+            state.activeLab = labId;
+
+            document.querySelectorAll('.lab-view').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+
+            const target = document.getElementById('lab-' + labId);
+            if (target) {
+                target.classList.remove('hidden');
+                target.classList.add('block');
+            }
+
+            document.querySelectorAll('.lab-subtab').forEach(btn => {
+                btn.className = 'lab-subtab px-4 py-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 text-xs font-bold font-orbitron flex items-center gap-2';
+            });
+
+            const activeSub = document.getElementById('subtab-' + labId);
+            if (activeSub) {
+                activeSub.className = 'lab-subtab px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold font-orbitron flex items-center gap-2';
+            }
+
+            setTimeout(initCanvasSimulators, 50);
+        };
+
+        let breathVal = 0.5;
+        let breathAuto = false;
+        let breathDir = 1;
+
+        window.updateBreathingMechanics = function(val) {
+            breathVal = parseFloat(val);
+            renderLungsCanvas();
+        };
+
+        window.toggleBreathAutoPlay = function() {
+            breathAuto = !breathAuto;
+            const btn = document.getElementById('breathAutoBtn');
+            btn.innerText = breathAuto ? '⏸️ Pause Cycle' : '▶️ Auto-Cycle';
+        };
+
+        function renderLungsCanvas() {
+            const canvas = document.getElementById('lungsCanvas');
+            if (!canvas || canvas.offsetParent === null) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Calculate contraction factors based on slider (0 = Exhale, 1 = Inhale)
+            const volume = Math.round(2000 + breathVal * 1700); // 2000ml to 3700ml
+            const pressure = Math.round(765 - breathVal * 14); // 765mmHg to 751mmHg
+
+            document.getElementById('metric-volume').innerText = `${volume} mL`;
+            document.getElementById('metric-pressure').innerText = `${pressure} mmHg (${breathVal > 0.5 ? 'Below' : 'Above'} Atm)`;
+            document.getElementById('metric-diaphragm').innerText = breathVal > 0.5 ? 'Contracted (Flat)' : 'Relaxed (Domed)';
+            
+            const airflowText = document.getElementById('metric-airflow');
+            if (breathVal > 0.6) {
+                airflowText.innerText = ' Oxygen In (Inspiration)';
+                airflowText.className = 'font-bold text-cyan-400';
+            } else if (breathVal < 0.4) {
+                airflowText.innerText = ' Carbon Dioxide Out (Expiration)';
+                airflowText.className = 'font-bold text-red-400';
+            } else {
+                airflowText.innerText = '⏸ Equilibrium';
+                airflowText.className = 'font-bold text-yellow-400';
+            }
+
+            document.getElementById('breathPhaseText').innerText = breathVal > 0.5 ? 'Phase: Inhalation' : 'Phase: Exhalation';
+
+            // Background Ribcage grid lines
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            const chestExpansion = breathVal * 25;
+
+            // Draw Ribcage ribs
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < 5; i++) {
+                let y = 120 + i * 45;
+                // Left Ribs
+                ctx.beginPath();
+                ctx.arc(w / 2 - 40, y, 90 + chestExpansion, Math.PI * 0.6, Math.PI * 1.3);
+                ctx.stroke();
+                // Right Ribs
+                ctx.beginPath();
+                ctx.arc(w / 2 + 40, y, 90 + chestExpansion, Math.PI * 1.7, Math.PI * 0.4);
+                ctx.stroke();
+            }
+
+            // Trachea
+            ctx.strokeStyle = '#00f2fe';
+            ctx.lineWidth = 16;
+            ctx.beginPath();
+            ctx.moveTo(w / 2, 40);
+            ctx.lineTo(w / 2, 140);
+            ctx.stroke();
+
+            // Cartilage rings
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 3;
+            for (let y = 55; y < 135; y += 15) {
+                ctx.beginPath();
+                ctx.moveTo(w / 2 - 8, y);
+                ctx.lineTo(w / 2 + 8, y);
+                ctx.stroke();
+            }
+
+            // Bronchi branching
+            ctx.strokeStyle = '#00f2fe';
+            ctx.lineWidth = 12;
+            ctx.beginPath();
+            ctx.moveTo(w / 2, 140);
+            ctx.lineTo(w / 2 - 60, 190);
+            ctx.moveTo(w / 2, 140);
+            ctx.lineTo(w / 2 + 60, 190);
+            ctx.stroke();
+
+            // Lungs expansion
+            const lungWidth = 80 + chestExpansion * 0.8;
+            const lungHeight = 130 + chestExpansion * 0.7;
+
+            // Left Lung
+            ctx.fillStyle = breathVal > 0.5 ? 'rgba(239, 68, 68, 0.75)' : 'rgba(185, 28, 28, 0.65)';
+            ctx.beginPath();
+            ctx.ellipse(w / 2 - 80 - chestExpansion * 0.4, 230, lungWidth, lungHeight, -0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Right Lung
+            ctx.beginPath();
+            ctx.ellipse(w / 2 + 80 + chestExpansion * 0.4, 230, lungWidth, lungHeight, 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Diaphragm Muscle Curve
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            const diaphragmY = 380 - breathVal * 45; // Flatten down when inhaling
+            ctx.moveTo(w / 2 - 200, 380);
+            ctx.quadraticCurveTo(w / 2, diaphragmY - 80 + breathVal * 70, w / 2 + 200, 380);
+            ctx.lineTo(w / 2 + 200, 410);
+            ctx.lineTo(w / 2 - 200, 410);
+            ctx.closePath();
+            ctx.fill();
+
+            // Airflow particles animation
+            ctx.fillStyle = breathVal > 0.5 ? '#00f2fe' : '#ff5252';
+            const particleY = (Date.now() / 8) % 100;
+            if (breathVal > 0.5) { // Downwards in
+                ctx.beginPath();
+                ctx.arc(w / 2, 40 + particleY, 4, 0, Math.PI * 2);
+                ctx.fill();
+            } else { // Upwards out
+                ctx.beginPath();
+                ctx.arc(w / 2, 140 - particleY, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let bloodPathogens = [];
+        let bloodAntibodies = [];
+
+        function initBloodSim() {
+            bloodPathogens = [
+                { x: 100, y: 150, vx: 1, vy: 0.8 },
+                { x: 200, y: 250, vx: -0.8, vy: 1.2 },
+                { x: 350, y: 180, vx: 1.2, vy: -0.5 }
+            ];
+            bloodAntibodies = [];
+        }
+
+        window.injectPathogens = function() {
+            playSound('click');
+            for (let i = 0; i < 4; i++) {
+                bloodPathogens.push({
+                    x: Math.random() * 500 + 50,
+                    y: Math.random() * 250 + 50,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2
+                });
+            }
+        };
+
+        window.releaseAntibodies = function() {
+            playSound('correct');
+            for (let i = 0; i < 6; i++) {
+                bloodAntibodies.push({
+                    x: 50 + i * 30,
+                    y: 350,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: -2
+                });
+            }
+        };
+
+        function renderBloodCanvas() {
+            const canvas = document.getElementById('bloodCanvas');
+            if (!canvas || canvas.offsetParent === null) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Blood vessel walls
+            ctx.fillStyle = 'rgba(153, 27, 27, 0.2)';
+            ctx.fillRect(0, 0, w, 20);
+            ctx.fillRect(0, h - 20, w, 20);
+
+            // Draw Red Blood Cells (Biconcave)
+            const time = Date.now() / 2000;
+            for (let i = 0; i < 8; i++) {
+                let rX = ((i * 80 + time * 60) % (w + 40)) - 20;
+                let rY = 60 + (i % 4) * 70;
+                
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath();
+                ctx.ellipse(rX, rY, 22, 14, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#991b1b';
+                ctx.beginPath();
+                ctx.ellipse(rX, rY, 10, 6, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw Phagocyte White Blood Cell
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.arc(300, 200, 38, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Phagocyte Lobed Nucleus
+            ctx.fillStyle = '#a855f7';
+            ctx.beginPath();
+            ctx.arc(288, 195, 12, 0, Math.PI * 2);
+            ctx.arc(312, 195, 10, 0, Math.PI * 2);
+            ctx.arc(300, 215, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Move and draw Pathogens (Bacteria/Viruses)
+            ctx.fillStyle = '#a3e635';
+            for (let i = bloodPathogens.length - 1; i >= 0; i--) {
+                let p = bloodPathogens[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 30 || p.x > w - 30) p.vx *= -1;
+                if (p.y < 40 || p.y > h - 40) p.vy *= -1;
+
+                // Draw spikey pathogen
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#65a30d';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Check collision with WBC phagocytosis
+                const distToWBC = Math.hypot(p.x - 300, p.y - 200);
+                if (distToWBC < 48) {
+                    bloodPathogens.splice(i, 1);
+                    playSound('click');
+                }
+            }
+
+            // Move and draw Y-shaped Antibodies
+            ctx.strokeStyle = '#00f2fe';
+            ctx.lineWidth = 3;
+            for (let i = bloodAntibodies.length - 1; i >= 0; i--) {
+                let ab = bloodAntibodies[i];
+                ab.x += ab.vx;
+                ab.y += ab.vy;
+
+                // Draw Y shape
+                ctx.beginPath();
+                ctx.moveTo(ab.x, ab.y);
+                ctx.lineTo(ab.x, ab.y - 8);
+                ctx.lineTo(ab.x - 6, ab.y - 14);
+                ctx.moveTo(ab.x, ab.y - 8);
+                ctx.lineTo(ab.x + 6, ab.y - 14);
+                ctx.stroke();
+
+                // Check collision with pathogens
+                for (let j = bloodPathogens.length - 1; j >= 0; j--) {
+                    let p = bloodPathogens[j];
+                    if (Math.hypot(ab.x - p.x, ab.y - p.y) < 15) {
+                        bloodPathogens.splice(j, 1);
+                        bloodAntibodies.splice(i, 1);
+                        playSound('correct');
+                        break;
+                    }
+                }
+            }
+        }
+
+        let particleTemp = 20;
+        let soluteParticles = [];
+
+        window.updateParticleTemp = function(val) {
+            particleTemp = parseInt(val);
+            document.getElementById('temp-val').innerText = `${particleTemp}°C`;
+        };
+
+        window.addSoluteCrystal = function() {
+            playSound('click');
+            for (let i = 0; i < 15; i++) {
+                soluteParticles.push({
+                    x: 280 + (Math.random() * 40 - 20),
+                    y: 300 + (Math.random() * 40 - 20),
+                    dissolved: false,
+                    vx: 0,
+                    vy: 0
+                });
+            }
+        };
+
+        function renderParticleCanvas() {
+            const canvas = document.getElementById('particleCanvas');
+            if (!canvas || canvas.offsetParent === null) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Draw Beaker
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(100, 80, 400, 280);
+
+            // Water Liquid Fill
+            const colorRatio = (particleTemp - 20) / 60;
+            ctx.fillStyle = `rgba(${Math.round(56 + colorRatio * 180)}, ${Math.round(189 - colorRatio * 100)}, 248, 0.35)`;
+            ctx.fillRect(103, 120, 394, 237);
+
+            // Water particles kinetic motion
+            const speedMultiplier = particleTemp / 15;
+            const time = Date.now() / 100;
+
+            ctx.fillStyle = '#38bdf8';
+            for (let i = 0; i < 30; i++) {
+                let wx = 120 + (i * 37 % 360);
+                let wy = 140 + (i * 23 % 200) + Math.sin(time * 0.2 + i) * speedMultiplier;
+                ctx.beginPath();
+                ctx.arc(wx, wy, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Solute Particles (Sugar)
+            ctx.fillStyle = '#ffffff';
+            soluteParticles.forEach(p => {
+                if (!p.dissolved) {
+                    if (Math.random() < particleTemp / 500) {
+                        p.dissolved = true;
+                        p.vx = (Math.random() - 0.5) * speedMultiplier;
+                        p.vy = (Math.random() - 0.5) * speedMultiplier;
+                    }
+                } else {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 110 || p.x > 490) p.vx *= -1;
+                    if (p.y < 130 || p.y > 350) p.vy *= -1;
+                }
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        let respirationActive = false;
+        let limewaterCloudiness = 0;
+
+        window.toggleRespiration = function(active) {
+            playSound('click');
+            respirationActive = active;
+            if (!active) limewaterCloudiness = 0;
+        };
+
+        function renderRespirationCanvas() {
+            const canvas = document.getElementById('respirationCanvas');
+            if (!canvas || canvas.offsetParent === null) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Left Flask: Yeast + Glucose Solution
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 4;
+            
+            // Flask 1 Shape
+            ctx.beginPath();
+            ctx.moveTo(120, 150);
+            ctx.lineTo(80, 320);
+            ctx.lineTo(220, 320);
+            ctx.lineTo(180, 150);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Flask 1 Liquid
+            ctx.fillStyle = 'rgba(234, 179, 8, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(95, 260);
+            ctx.lineTo(82, 318);
+            ctx.lineTo(218, 318);
+            ctx.lineTo(205, 260);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right Flask: Limewater
+            ctx.beginPath();
+            ctx.moveTo(420, 150);
+            ctx.lineTo(380, 320);
+            ctx.lineTo(520, 320);
+            ctx.lineTo(480, 150);
+            ctx.closePath();
+            ctx.stroke();
+
+            // Flask 2 Liquid (Limewater turning milky cloudy)
+            if (respirationActive && limewaterCloudiness < 0.85) {
+                limewaterCloudiness += 0.002;
+            }
+            const cloud = limewaterCloudiness;
+            ctx.fillStyle = `rgba(${Math.round(200 + cloud * 55)}, ${Math.round(220 + cloud * 35)}, ${Math.round(240 + cloud * 15)}, ${0.2 + cloud * 0.7})`;
+            ctx.beginPath();
+            ctx.moveTo(395, 250);
+            ctx.lineTo(382, 318);
+            ctx.lineTo(518, 318);
+            ctx.lineTo(505, 250);
+            ctx.closePath();
+            ctx.fill();
+
+            // Connecting Tube
+            ctx.strokeStyle = '#00f2fe';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(150, 150);
+            ctx.lineTo(150, 100);
+            ctx.lineTo(450, 100);
+            ctx.lineTo(450, 280);
+            ctx.stroke();
+
+            // CO2 Bubbles animation
+            if (respirationActive) {
+                const bubbleY = 280 - ((Date.now() / 10) % 180);
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(450, bubbleY, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Text status
+                ctx.fillStyle = '#00e676';
+                ctx.font = 'bold 12px Inter';
+                ctx.fillText('CO₂ Gas Bubbling...', 410, 80);
+            }
+        }
+
+        function initCanvasSimulators() {
+            initBloodSim();
+        }
+
+        // Master Animation Loop
+        function animLoop() {
+            if (breathAuto) {
+                breathVal += 0.01 * breathDir;
+                if (breathVal >= 1 || breathVal <= 0) breathDir *= -1;
+                const slider = document.getElementById('breathSlider');
+                if (slider) slider.value = breathVal;
+            }
+
+            if (state.activeTab === 'lab-simulators') {
+                if (state.activeLab === 'lungs-sim') renderLungsCanvas();
+                else if (state.activeLab === 'blood-sim') renderBloodCanvas();
+                else if (state.activeLab === 'particle-sim') renderParticleCanvas();
+                else if (state.activeLab === 'respiration-sim') renderRespirationCanvas();
+            }
+
+            requestAnimationFrame(animLoop);
+        }
+
+        const SECTORS_DATA = [
+            {
+                id: 0,
+                title: 'Respiratory System Mechanics',
+                icon: '🫁',
+                desc: 'Structure of trachea, bronchi, alveoli, diaphragm, and gas exchange principles.',
+                xp: 100,
+                questions: [
+                    { q: 'Which structure prevents the human trachea from collapsing during inspiration?', options: ['Smooth Muscle', 'C-shaped Cartilage Rings', 'Alveolar Fluid', 'Pleural Membrane'], correct: 1 },
+                    { q: 'During inhalation, what happens to the diaphragm muscle?', options: ['Relaxes and arches up into a dome', 'Contracts and flattens downwards', 'Expands outwards sideways', 'Remains completely stationary'], correct: 1 }
+                ]
+            },
+            {
+                id: 1,
+                title: 'Cellular Respiration & Energy',
+                icon: '🧪',
+                desc: 'Aerobic equation, glucose oxidation, ATP yield, and limewater CO2 indicator test.',
+                xp: 100,
+                questions: [
+                    { q: 'What are the products of aerobic cellular respiration?', options: ['Glucose and Oxygen', 'Carbon Dioxide, Water, and Energy', 'Lactic Acid and Ethanol', 'Nitrogen and Carbon Monoxide'], correct: 1 },
+                    { q: 'What color change occurs when Carbon Dioxide is bubbled into limewater?', options: ['Turns Bright Blue', 'Turns Clear to Milky Cloudy White', 'Turns Crimson Red', 'No change'], correct: 1 }
+                ]
+            },
+            {
+                id: 2,
+                title: 'Blood Vessels & Patrol',
+                icon: '🩸',
+                desc: 'Red blood cells, white blood cell types (phagocytes vs lymphocytes), and plasma.',
+                xp: 100,
+                questions: [
+                    { q: 'Why do red blood cells lack a nucleus?', options: ['To divide faster', 'To maximize space for hemoglobin and oxygen', 'To fit through skin pores', 'To manufacture antibodies'], correct: 1 },
+                    { q: 'How do phagocytes destroy ingested pathogens?', options: ['By producing insulin', 'By engulfing and digesting them with enzymes', 'By forming blood clots', 'By pumping oxygen'], correct: 1 }
+                ]
+            },
+            {
+                id: 3,
+                title: 'Pathogens & Immunity',
+                icon: '🛡️',
+                desc: 'Bacteria, viruses, antigen recognition, and Y-shaped antibody synthesis.',
+                xp: 100,
+                questions: [
+                    { q: 'Which cell type synthesizes specific Y-shaped antibodies?', options: ['Platelets', 'Lymphocytes', 'Erythrocytes', 'Phagocytes'], correct: 1 },
+                    { q: 'Antibodies bind specifically to complimentary markers on pathogens called:', options: ['Antigens', 'Enzymes', 'Hormones', 'Ribosomes'], correct: 0 }
+                ]
+            },
+            {
+                id: 4,
+                title: 'Particle Model of Matter',
+                icon: '🧊',
+                desc: 'Solid, liquid, and gas arrangements, kinetic thermal energy, and particle motion.',
+                xp: 100,
+                questions: [
+                    { q: 'How do particles in a liquid differ from particles in a solid?', options: ['Liquid particles are fixed in a rigid lattice', 'Liquid particles can slide past one another with higher kinetic energy', 'Liquid particles have zero motion', 'Liquid particles are lighter'], correct: 1 }
+                ]
+            },
+            {
+                id: 5,
+                title: 'Solutions & Solubility',
+                icon: '☕',
+                desc: 'Solute, solvent, dissolving rates, and thermal solubility calculations.',
+                xp: 100,
+                questions: [
+                    { q: 'Why does sugar dissolve faster in hot water than in cold water?', options: ['Hot water particles move faster with more kinetic energy', 'Sugar particles shrink when heated', 'Water particles freeze', 'Gravity increases'], correct: 0 }
+                ]
+            }
+        ];
+
+        function renderSectors() {
+            const container = document.getElementById('sectors-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            SECTORS_DATA.forEach((sec, idx) => {
+                const isCompleted = state.completedSectors[idx];
+                const card = document.createElement('div');
+                card.className = `glass-panel p-5 rounded-2xl flex flex-col justify-between space-y-4 border ${isCompleted ? 'border-emerald-500/50' : 'border-slate-800'}`;
+                
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-3xl">${sec.icon}</span>
+                            <span class="text-xs font-mono px-2 py-1 rounded ${isCompleted ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}">
+                                ${isCompleted ? '✓ MASTERED' : `+${sec.xp} XP`}
+                            </span>
+                        </div>
+                        <h3 class="text-base font-bold font-orbitron text-slate-100">${sec.title}</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">${sec.desc}</p>
+                    </div>
+                    <button onclick="openSectorQuiz(${idx})" class="w-full py-2 rounded-xl text-xs font-bold font-orbitron transition-all ${isCompleted ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40'}">
+                        ${isCompleted ? 'Re-test Sector' : 'Start Sector Quiz ➔'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.openSectorQuiz = function(sectorIdx) {
+            playSound('click');
+            state.currentQuizSector = sectorIdx;
+            state.quizQuestionIdx = 0;
+            state.quizScore = 0;
+
+            const sec = SECTORS_DATA[sectorIdx];
+            document.getElementById('modal-sector-icon').innerText = sec.icon;
+            document.getElementById('modal-sector-title').innerText = sec.title;
+
+            renderQuizQuestion();
+            document.getElementById('sector-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = function() {
+            playSound('click');
+            document.getElementById('sector-modal').classList.add('hidden');
+        };
+
+        function renderQuizQuestion() {
+            const sec = SECTORS_DATA[state.currentQuizSector];
+            const qObj = sec.questions[state.quizQuestionIdx];
+            const content = document.getElementById('modal-quiz-content');
+
+            if (!qObj) {
+                // Quiz Complete!
+                const passed = state.quizScore === sec.questions.length;
+                if (passed && !state.completedSectors[state.currentQuizSector]) {
+                    state.completedSectors[state.currentQuizSector] = true;
+                    addXP(sec.xp);
+                    renderSectors();
+                }
+
+                content.innerHTML = `
+                    <div class="text-center space-y-4 py-4">
+                        <div class="text-4xl">${passed ? '🎉' : '📚'}</div>
+                        <h4 class="text-lg font-bold font-orbitron ${passed ? 'text-emerald-400' : 'text-yellow-400'}">
+                            ${passed ? 'Sector Mastered!' : 'Review Needed'}
+                        </h4>
+                        <p class="text-xs text-slate-300">Score: ${state.quizScore} / ${sec.questions.length}</p>
+                        <button onclick="closeModal()" class="px-5 py-2 rounded-xl bg-cyan-500 text-black font-bold text-xs">
+                            Continue
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <p class="text-xs font-mono text-cyan-400">Question ${state.quizQuestionIdx + 1} of ${sec.questions.length}</p>
+                    <p class="text-sm font-semibold text-slate-100">${qObj.q}</p>
+                    <div class="space-y-2 pt-2">
+                        ${qObj.options.map((opt, i) => `
+                            <button onclick="submitQuizAnswer(${i})" class="w-full text-left p-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-xs text-slate-200 transition-all">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.submitQuizAnswer = function(optIdx) {
+            const sec = SECTORS_DATA[state.currentQuizSector];
+            const qObj = sec.questions[state.quizQuestionIdx];
+
+            if (optIdx === qObj.correct) {
+                playSound('correct');
+                state.quizScore++;
+            } else {
+                playSound('wrong');
+            }
+
+            state.quizQuestionIdx++;
+            renderQuizQuestion();
+        };
+
+        const EXAM_QUESTIONS = [
+            { q: 'Which tissue structure in the trachea prevents collapse under negative thoracic pressure?', options: ['Smooth Muscle', 'C-shaped Cartilage Rings', 'Elastic Connective Tissue', 'Epithelium'], correct: 1 },
+            { q: 'In the human circulatory system, which blood component synthesizes Y-shaped protective antibodies?', options: ['Erythrocytes', 'Phagocytes', 'Lymphocytes', 'Blood Platelets'], correct: 2 },
+            { q: 'During cellular aerobic respiration, what is oxidized alongside glucose?', options: ['Carbon Dioxide', 'Oxygen', 'Water', 'Nitrogen'], correct: 1 },
+            { q: 'What indicator reaction confirms the presence of Carbon Dioxide gas?', options: ['Turns Iodine Solution Black', 'Turns Clear Limewater Milky Cloudy', 'Turns Biuret Solution Purple', 'Turns Benedicts Red'], correct: 1 },
+            { q: 'Which statement accurately describes red blood cell adaptation?', options: ['Spherical with double nuclei', 'Biconcave disc with no nucleus to maximize hemoglobin', 'Star shaped for rapid swimming', 'Thick cell walls'], correct: 1 },
+            { q: 'How does an increase in temperature affect liquid particle motion?', options: ['Particles stop moving', 'Particles gain kinetic energy and move faster', 'Particles lock into fixed crystal shapes', 'Particles lose mass'], correct: 1 },
+            { q: 'A solute is best defined as:', options: ['The liquid doing the dissolving', 'The solid substance being dissolved', 'The final uniform mixture', 'An insoluble precipitate'], correct: 1 },
+            { q: 'If 204 g of sugar dissolves in 100 g water at 20°C, how much dissolves in 250 g water at 20°C?', options: ['408 g', '510 g', '204 g', '1020 g'], correct: 1 },
+            { q: 'At 80°C, 362 g sugar dissolves in 100 g water. In 250 g water, 905 g dissolves. How much MORE dissolves when heating 250 g water from 20°C (510g) to 80°C (905g)?', options: ['395 g', '204 g', '158 g', '500 g'], correct: 0 },
+            { q: 'What occurs during exhalation (expiration)?', options: ['Diaphragm contracts down', 'Thoracic cavity volume decreases, raising pressure', 'Ribs move upwards and outwards', 'Air rushes inwards'], correct: 1 }
+        ];
+
+        window.startExam = function() {
+            playSound('click');
+            state.examIdx = 0;
+            state.examAnswers = Array(10).fill(null);
+            document.getElementById('exam-start-card').classList.add('hidden');
+            document.getElementById('exam-quiz-container').classList.remove('hidden');
+            renderExamQuestion();
+        };
+
+        function renderExamQuestion() {
+            const q = EXAM_QUESTIONS[state.examIdx];
+            document.getElementById('exam-progress-num').innerText = `Question ${state.examIdx + 1} of 10`;
+            
+            const answeredCount = state.examAnswers.filter(a => a !== null).length;
+            document.getElementById('exam-score-live').innerText = `Answered: ${answeredCount}/10`;
+
+            const body = document.getElementById('exam-question-body');
+            body.innerHTML = `
+                <p class="text-sm font-semibold text-slate-100">${q.q}</p>
+                <div class="space-y-2 pt-2">
+                    ${q.options.map((opt, i) => {
+                        const selected = state.examAnswers[state.examIdx] === i;
+                        return `
+                            <button onclick="selectExamOption(${state.examIdx}, ${i})" class="w-full text-left p-3.5 rounded-xl border text-xs transition-all ${selected ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold' : 'bg-slate-900/80 border-slate-700 text-slate-300 hover:bg-slate-800'}">
+                                ${selected ? '🔘' : '⚪'} ${opt}
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.getElementById('exam-prev-btn').disabled = state.examIdx === 0;
+            const nextBtn = document.getElementById('exam-next-btn');
+            if (state.examIdx === 9) {
+                nextBtn.innerText = 'Submit Final Exam 🏆';
+                nextBtn.onclick = window.submitExam;
+            } else {
+                nextBtn.innerText = 'Next Question →';
+                nextBtn.onclick = window.nextExamQuestion;
+            }
+        }
+
+        window.selectExamOption = function(qIdx, optIdx) {
+            playSound('click');
+            state.examAnswers[qIdx] = optIdx;
+            renderExamQuestion();
+        };
+
+        window.prevExamQuestion = function() {
+            if (state.examIdx > 0) {
+                playSound('click');
+                state.examIdx--;
+                renderExamQuestion();
+            }
+        };
+
+        window.nextExamQuestion = function() {
+            if (state.examIdx < 9) {
+                playSound('click');
+                state.examIdx++;
+                renderExamQuestion();
+            }
+        };
+
+        window.submitExam = function() {
+            playSound('levelup');
+            let score = 0;
+            EXAM_QUESTIONS.forEach((q, i) => {
+                if (state.examAnswers[i] === q.correct) score++;
+            });
+
+            document.getElementById('exam-quiz-container').classList.add('hidden');
+            const resCard = document.getElementById('exam-result-card');
+            resCard.classList.remove('hidden');
+
+            const pct = (score / 10) * 100;
+            document.getElementById('exam-result-score').innerText = `${score} / 10 (${pct}%)`;
+
+            if (pct >= 80) {
+                addXP(500);
+                document.getElementById('exam-result-title').innerText = '🎓 Grand Master Mastery Achieved!';
+                document.getElementById('exam-result-msg').innerText = 'Congratulations! You have demonstrated full mastery of Grade 7 Cambridge Bio-Chem concepts!';
+            } else {
+                document.getElementById('exam-result-title').innerText = 'Keep Practicing!';
+                document.getElementById('exam-result-msg').innerText = 'Review the Revision Notes and Lab Simulators to sharpen your knowledge and retake!';
+            }
+        };
+
+        window.resetExam = function() {
+            document.getElementById('exam-result-card').classList.add('hidden');
+            document.getElementById('exam-start-card').classList.remove('hidden');
+        };
+
+        const REVISION_NOTES_DATA = [
+            { cat: 'bio', title: '🫁 Respiration vs Breathing', text: 'Breathing is the physical muscle mechanics of inhaling O₂ and exhaling CO₂. Respiration is the chemical oxidation of glucose inside cells to release energy.' },
+            { cat: 'bio', title: '🩸 Blood Cells', text: 'RBCs carry O₂ using hemoglobin (no nucleus, biconcave). WBCs defend against disease: Phagocytes engulf pathogens; Lymphocytes make Y-shaped antibodies.' },
+            { cat: 'chem', title: '🧊 Particle States', text: 'Solids have fixed shapes with vibrating particles. Liquids flow as particles slide. Gases move randomly with high kinetic energy.' },
+            { cat: 'chem', title: '☕ Solutions & Thermal Solubility', text: 'Solute + Solvent = Solution. Heating increases kinetic energy of solvent molecules, allowing more solid solute particles to dissolve.' }
+        ];
+
+        function renderNotes() {
+            const grid = document.getElementById('notes-grid');
+            if (!grid) return;
+            grid.innerHTML = REVISION_NOTES_DATA.map(n => `
+                <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-cyan-300 font-orbitron">${n.title}</h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">${n.text}</p>
+                </div>
+            `).join('');
+        }
+
+        window.filterNotes = function(cat) {
+            playSound('click');
+            const grid = document.getElementById('notes-grid');
+            const filtered = cat === 'all' ? REVISION_NOTES_DATA : REVISION_NOTES_DATA.filter(n => n.cat === cat);
+            grid.innerHTML = filtered.map(n => `
+                <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-cyan-300 font-orbitron">${n.title}</h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">${n.text}</p>
+                </div>
+            `).join('');
+        };
+
+        window.onload = function() {
+            renderSectors();
+            renderNotes();
+            updateXPUI();
+            initCanvasSimulators();
+            animLoop();
+        };
+    </script>
+</body>
+</html>
